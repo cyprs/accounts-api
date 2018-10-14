@@ -33,4 +33,43 @@ router.post('/sign-up', (req, res, next) => {
     });
 });
 
+router.post('/sign-in', (req, res) => {
+    const {email, password} = req.body;
+
+    User.findOne({
+        email
+    }, (err, user) => {
+        if(err)
+            throw err;
+
+        if(!user){
+            res.json({
+                status: false,
+                message: 'User not found.'
+            });
+        }else{
+            bcrypt.compare(password, user.password).then((result) => {
+                if(!result){
+                    res.json({
+                        status: false,
+                        message: 'Wrong password.'
+                    });
+                }else{
+                    const payload = {
+                        email
+                    };
+                    const token = jwt.sign(payload, req.app.get('api_secret_key'),{
+                        expiresIn: 5260 // 10 yıl
+                    });
+
+                    res.json({
+                        status: true,
+                        token
+                    })
+                }
+            });
+        }
+    });
+});
+
 module.exports = router;
